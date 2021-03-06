@@ -9,7 +9,6 @@ const path = require('path');
 const indexRoute = require('../routes/index');
 const aboutRoute = require('../routes/about');
 
-
 class Server {
     constructor(portNumber) {
         this.app = express();
