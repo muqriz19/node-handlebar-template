@@ -1,10 +1,13 @@
-const { src, dest, series, parallel, watch, task } = require('gulp');
-const nodemon = require('gulp-nodemon');
+const path = require('path');
 const browserSync = require('browser-sync');
 const reload = browserSync.reload;
+const { src, dest, series, parallel, watch, task } = require('gulp');
+const nodemon = require('gulp-nodemon');
 const minifyCSS = require('gulp-minify-css');
 const less = require('gulp-less');
-const path = require('path');
+const concat = require('gulp-concat');
+
+const DISTDIR = path.resolve(__dirname, './public/dist');
 
 function runServer(cb) {
     console.log('Running server...');
@@ -36,7 +39,23 @@ function compileStyles() {
         const stream = src(pathToCSS + '/**/*.less')
             .pipe(less())
             .pipe(minifyCSS())
-            .pipe(dest(pathToCSS + '/dist'));
+            .pipe(dest(DISTDIR));
+
+        stream.on('finished', function () {
+            resolve();
+        });
+
+        resolve();
+    });
+}
+
+function compileJS() {
+    return new Promise((resolve, reject) => {
+        console.log('Compiling JS...');
+        const pathToCSS = path.resolve(__dirname, './public/scripts');
+        const stream = src(pathToCSS + '/**/*.js')
+            .pipe(concat('main.js'))
+            .pipe(dest(DISTDIR));
 
         stream.on('finished', function () {
             resolve();
@@ -55,6 +74,7 @@ function watchFiles() {
         ],
             function (cb) {
                 compileStyles();
+                compileJS();
                 reload();
                 cb();
             }).on('change', function (change) {
@@ -68,4 +88,4 @@ function watchFiles() {
     });
 }
 
-task('default', parallel(runServer, series(compileStyles, reloadBrowser, watchFiles)));
+task('default', parallel(runServer, series(compileStyles, compileJS, reloadBrowser, watchFiles)));
