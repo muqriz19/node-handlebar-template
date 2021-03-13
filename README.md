@@ -11,10 +11,12 @@ Will update more as I learn and get fimilar with it.
 - live-reload browser
 - less -> css
 - minify css
+- allow require use on client side
+- Project will create different bundle (any js found in public/scripts/**) for different pages and store in public/dist folder, and to use them link <script src="/dist/theJSFILE"> at respective .hbs templates
 
 ## Instruction
-Simply execute npm run start
+gulp
 
 `
-npm run start
+gulp
 `
