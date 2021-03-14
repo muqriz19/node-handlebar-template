@@ -38,28 +38,36 @@ const allWatchFiles = [
     './src/views/**/*.hbs'
 ];
 
-function runServer(cb) {
+function runServer() {
     console.log('Running server...');
+    return new Promise((resolve) => {
+        nodemon({
+            script: paths.js.serverFile,
+            env: { 'NODE_ENV': 'development' },
+        });
 
-    nodemon({
-        script: paths.js.serverFile,
-        env: { 'NODE_ENV': 'development' },
-        done: cb
+        resolve();
     });
 }
 
-function reloadBrowser(cb) {
+function launchBrowser(cb) {
     console.log('Reloading browser...');
+    return new Promise((resolve) => {
+        browserSync.init({
+            proxy: 'localhost:3030',
+            browser: ['chromium']
+        });
 
-    browserSync.init({
-        proxy: 'localhost:3030',
-        browser: ['chromium']
+        resolve();
     });
-
-    cb();
 }
 
 function compileStyles() {
+    console.log('LESS to CSS process...');
+    // LESS to CSS
+    // FIRST COMPILE LESS TO CSS
+    // THEN MINIFY IT
+
     return new Promise((resolve, reject) => {
         console.log('LESS to CSS process...');
         // LESS to CSS
@@ -75,10 +83,12 @@ function compileStyles() {
 }
 
 function compileJS() {
+    console.log('Compiling JS...');
+
     return new Promise((resolve, reject) => {
         console.log('Compiling JS...');
-        paths.js.pagesJS.forEach((pageJS) => {
 
+        paths.js.pagesJS.forEach((pageJS) => {
             browserify(clientJS + '/' + pageJS + '.js', {
                 debug: true,
             }).transform(babelify.configure({
@@ -86,8 +96,8 @@ function compileJS() {
             })).bundle()
                 .pipe(source(pageJS + '-dist.js'))
                 .pipe(dest(paths.dist.final));
-            resolve();
         });
+        resolve();
     });
 }
 
@@ -99,14 +109,14 @@ function watchFiles() {
                 const ext = change.split('.')[1];
                 const file = change.split('.')[0].split('/')[change.split('.')[0].split('/').length - 1];
                 const filename = file + '.' + ext;
-                compileJS();
                 compileStyles();
+                compileJS();
                 reload();
 
                 console.log(filename, 'was changed...');
+                resolve();
             });
-        resolve();
     });
 }
 
-task('default', parallel(runServer, series(compileStyles, compileJS, reloadBrowser, watchFiles)));
+task('default', series(compileJS, compileStyles, runServer, launchBrowser, watchFiles));
